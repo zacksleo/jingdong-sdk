@@ -15,6 +15,7 @@ class Api extends AbstractAPI
     private $key;
     private $secret;
     private $inDev = false;
+    public $accessToken;
 
     public function __construct($key, $secret)
     {
@@ -63,17 +64,19 @@ class Api extends AbstractAPI
             throw new \InvalidArgumentException('不支持的参数格式');
         }
         $form = [
-            'app_key'           => $this->key,
-            'v'                 => self::VERSION,
+            'access_token'      => $this->accessToken,
             'method'            => $appMethod,
-            'timestamp'         => date('Y-m-d H:i:s'),
-            '360buy_param_json' => $params,
             'sign'              => $this->signature($params),
+            'app_key'           => $this->key,
+            'timestamp'         => date('Y-m-d H:i:s'),
+            'format'            => 'json',
+            'v'                 => self::VERSION,
+            '360buy_param_json' => $params,
         ];
         try {
             $http = $this->getHttp();
             $response = $http->request('POST', $this->getGateway(), [
-                'form_params' => $params,
+                'form_params' => $form,
             ]);
         } catch (\Exception  $e) {
             Log::error($e->getMessage(), $e->getTrace());
@@ -82,8 +85,7 @@ class Api extends AbstractAPI
 
         $res = json_decode((string) $response->getBody(), true);
 
-
-       return $res;
+        return $res;
     }
 
     /**
@@ -94,11 +96,11 @@ class Api extends AbstractAPI
      */
     private function autoCompleteAppMethod($appMethod)
     {
-        if (strpos($appMethod, 'jingdong.') !== 0) {
-            return 'jingdong.'.$appMethod;
+        if (strpos($appMethod, 'jingdong.') === 0 || strpos($appMethod, '360buy.') === 0) {
+            return $appMethod;
         }
 
-        return $appMethod;
+        return 'jingdong.'.$appMethod;
     }
 
     /**
@@ -110,17 +112,16 @@ class Api extends AbstractAPI
      */
     private function signature($params)
     {
-		ksort($params);
-		$stringToBeSigned = $this->secret;
-		foreach ($params as $k => $v)
-		{
-			if("@" != substr($v, 0, 1))
-			{
-				$stringToBeSigned .= "$k$v";
-			}
-		}
-		unset($k, $v);
-		$stringToBeSigned .= $this->appSecret;
-		return strtoupper(md5($stringToBeSigned));
+        ksort($params);
+        $stringToBeSigned = $this->secret;
+        foreach ($params as $k => $v) {
+            if ('@' != substr($v, 0, 1)) {
+                $stringToBeSigned .= "$k$v";
+            }
+        }
+        unset($k, $v);
+        $stringToBeSigned .= $this->secret;
+
+        return strtoupper(md5($stringToBeSigned));
     }
 }
