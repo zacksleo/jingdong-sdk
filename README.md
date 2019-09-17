@@ -11,7 +11,45 @@ $ composer require zacksleo/jingdong-sdk -vvv
 
 ## Usage
 
-TODO
+### 创建客户端
+
+```php
+$jingdong = new Jingdong([
+    'key'    => 'key',
+    'secret' => 'secret',
+    'debug'  => false,
+    'log'    => [
+        'name'       => 'jingdong',
+        'file'       => '/path/to/logs/jingdong.log'),
+        'level'      => 'debug',
+        'permission' => 0777,
+    ],
+]);
+```
+
+### 调用
+
+#### 链式调用
+
+```php
+$res = $jingdong->pop->order->get([
+    'order_state' => 'WAIT_SELLER_DELIVERY',
+    'optional_fields' => 'venderId,orderType,payType',
+    'order_id' => '67834311',
+]);
+```
+
+#### 普通调用
+
+```php
+
+$res = $jingdong->request('pop.order.get', [
+    'order_state' => 'WAIT_SELLER_DELIVERY',
+    'optional_fields' => 'venderId,orderType,payType',
+    'order_id' => '67834311',
+]);
+
+```
 
 ## Contributing
 
